@@ -2,6 +2,8 @@ package se331.lab.rest.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class EventController {
     List<Event> eventList;
 
@@ -98,14 +101,17 @@ public class EventController {
 
         int firstIndex = (page - 1) * perPage;
         List<Event> output = new ArrayList<>();
+        HttpHeaders responseHeader = new HttpHeaders();
+        responseHeader.set("X-Total-Count", String.valueOf(eventList.size()));
+        responseHeader.setAccessControlExposeHeaders(java.util.List.of("X-Total-Count"));
         try {
             for (int i = firstIndex; i < firstIndex + perPage; i++) {
                 output.add(eventList.get(i));
             }
+            return new ResponseEntity<>(output, responseHeader, HttpStatus.OK);
         } catch (IndexOutOfBoundsException ex) {
-            return ResponseEntity.ok(output);
+            return new ResponseEntity<>(output, responseHeader, HttpStatus.OK);
         }
-        return ResponseEntity.ok(output);
     }
 
     @GetMapping("events/{id}")
