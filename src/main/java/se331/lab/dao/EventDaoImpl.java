@@ -1,23 +1,14 @@
-package se331.lab.rest.controller;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import se331.lab.Event;
+package se331.lab.dao;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Repository;
+import se331.lab.Event;
+
 import java.util.ArrayList;
 import java.util.List;
 
-@RestController
-@CrossOrigin(origins = "*")
-public class EventController {
+@Repository
+public class EventDaoImpl implements EventDao {
     List<Event> eventList;
 
     @PostConstruct
@@ -56,7 +47,7 @@ public class EventController {
                 .time("11:00")
                 .petAllowed(false)
                 .organizer("Carey Wales")
-                .build());    
+                .build());
         eventList.add(Event.builder()
                 .id(1001L)
                 .category("animal welfare")
@@ -68,7 +59,7 @@ public class EventController {
                 .petAllowed(true)
                 .organizer("Dawg Dahd")
                 .build());
-        eventList.add(Event.builder()       
+        eventList.add(Event.builder()
                 .id(1002L)
                 .category("food")
                 .title("Canned Food Drive")
@@ -92,30 +83,25 @@ public class EventController {
                 .build());
     }
 
-    @GetMapping("events")
-    public ResponseEntity<?> getEventLists(
-            @RequestParam(value = "_limit", required = false) Integer perPage,
-            @RequestParam(value = "_page", required = false) Integer page) {
-        perPage = perPage == null ? eventList.size() : perPage;
-        page = page == null ? 1 : page;
-
-        int firstIndex = (page - 1) * perPage;
-        List<Event> output = new ArrayList<>();
-        HttpHeaders responseHeader = new HttpHeaders();
-        responseHeader.set("X-Total-Count", String.valueOf(eventList.size()));
-        responseHeader.setAccessControlExposeHeaders(java.util.List.of("X-Total-Count"));
-        try {
-            for (int i = firstIndex; i < firstIndex + perPage; i++) {
-                output.add(eventList.get(i));
-            }
-            return new ResponseEntity<>(output, responseHeader, HttpStatus.OK);
-        } catch (IndexOutOfBoundsException ex) {
-            return new ResponseEntity<>(output, responseHeader, HttpStatus.OK);
-        }
+    @Override
+    public Integer getEventSize() {
+        return eventList.size();
     }
 
-    @GetMapping("events/{id}")
-    public ResponseEntity<?> getEvent(@PathVariable("id") Long id) {
+    @Override
+    public List<Event> getEvents(Integer pageSize, Integer page) {
+        pageSize = pageSize == null ? eventList.size() : pageSize;
+        page = page == null ? 1 : page;
+        Integer firstIndex = (page - 1) * pageSize;
+        List<Event> output = new ArrayList<>();
+        for (int i = firstIndex; i < firstIndex + pageSize && i < eventList.size(); i++) {
+            output.add(eventList.get(i));
+        }
+        return output;
+    }
+
+    @Override
+    public Event getEvent(Long id) {
         Event output = null;
         for (Event event : eventList) {
             if (event.getId().equals(id)) {
@@ -123,11 +109,6 @@ public class EventController {
                 break;
             }
         }
-        if (output != null) {
-            return ResponseEntity.ok(output);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The given id is not found");
-        }
+        return output;
     }
 }
-            
