@@ -17,6 +17,9 @@ or
 ```
 The app starts on `http://localhost:8080` by default.
 
+http://localhost:8080/events
+
+
 ## API Endpoints
 ### Events
 - List (with pagination): `GET /events?_limit={n}&_page={p}`
