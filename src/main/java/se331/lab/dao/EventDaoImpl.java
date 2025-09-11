@@ -1,6 +1,9 @@
 package se331.lab.dao;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import se331.lab.Event;
@@ -91,11 +94,13 @@ public class EventDaoImpl implements EventDao {
     }
 
     @Override
-    public List<Event> getEvents(Integer pageSize, Integer page) {
+    public Page<Event> getEvents(Integer pageSize, Integer page) {
         pageSize = pageSize == null ? eventList.size() : pageSize;
         page = page == null ? 1 : page;
         int firstIndex = (page - 1) * pageSize;
-        return eventList.subList(firstIndex, firstIndex + pageSize);
+        int toIndex = Math.min(firstIndex + pageSize, eventList.size());
+        List<Event> slice = firstIndex >= eventList.size() ? java.util.Collections.emptyList() : eventList.subList(firstIndex, toIndex);
+        return new PageImpl<>(slice, PageRequest.of(page - 1, pageSize), eventList.size());
     }
 
     @Override
