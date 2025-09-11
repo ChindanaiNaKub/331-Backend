@@ -1,6 +1,7 @@
 package se331.lab.dao;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import se331.lab.Event;
 import se331.lab.repository.EventRepository;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@Profile("db")
 public class EventDaoDbImpl implements EventDao {
     final EventRepository eventRepository;
 
