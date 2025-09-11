@@ -6,15 +6,21 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import org.springframework.lang.NonNull;
 import se331.lab.Event;
+import se331.lab.Organizer;
 import se331.lab.repository.EventRepository;
+import se331.lab.repository.OrganizerRepository;
 
 @Component
 @RequiredArgsConstructor
 public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
     final EventRepository eventRepository;
+    final OrganizerRepository organizerRepository;
 
     @Override
     public void onApplicationEvent(@NonNull ApplicationReadyEvent applicationReadyEvent) {
+        organizerRepository.save(Organizer.builder().organizationName("Nature Care Org").address("123 Green St, Flora City").build());
+        organizerRepository.save(Organizer.builder().organizationName("Animal Friends Association").address("55 Paw Ave, Meow Town").build());
+        organizerRepository.save(Organizer.builder().organizationName("Community Helpers").address("9 Unity Rd, Tin City").build());
         eventRepository.save(Event.builder()
                 .category("Academic")
                 .title("Midterm Exam")
