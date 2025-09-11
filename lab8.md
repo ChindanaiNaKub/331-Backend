@@ -91,7 +91,7 @@ _note _you have to import the class package, you may use the fix hint of the IDE
         then update the each file as given
 ```
 
-the EventRepository.java
+the EventRepository.java    
 
 ```
 package se331.lab.repository;
