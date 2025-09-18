@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import se331.lab.Event;
@@ -101,6 +102,26 @@ public class EventDaoImpl implements EventDao {
         int toIndex = Math.min(firstIndex + pageSize, eventList.size());
         List<Event> slice = firstIndex >= eventList.size() ? java.util.Collections.emptyList() : eventList.subList(firstIndex, toIndex);
         return new PageImpl<>(slice, PageRequest.of(page - 1, pageSize), eventList.size());
+    }
+
+    @Override
+    public Page<Event> getEvents(String title, Pageable page) {
+        String keyword = title == null ? "" : title.trim().toLowerCase();
+        List<Event> filtered = keyword.isEmpty() ? eventList : eventList.stream()
+                .filter(e ->
+                        (e.getTitle() != null && e.getTitle().toLowerCase().contains(keyword)) ||
+                        (e.getDescription() != null && e.getDescription().toLowerCase().contains(keyword)) ||
+                        (e.getOrganizer() != null && e.getOrganizer().toLowerCase().contains(keyword))
+                )
+                .toList();
+
+        int pageNumber = page.getPageNumber();
+        int pageSize = page.getPageSize();
+        int firstIndex = Math.max(0, pageNumber) * pageSize;
+        int toIndex = Math.min(firstIndex + pageSize, filtered.size());
+
+        List<Event> slice = firstIndex >= filtered.size() ? java.util.Collections.emptyList() : filtered.subList(firstIndex, toIndex);
+        return new PageImpl<>(slice, page, filtered.size());
     }
 
     @Override
