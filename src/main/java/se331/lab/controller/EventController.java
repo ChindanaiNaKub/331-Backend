@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import se331.lab.Event;
 import se331.lab.service.EventService;
+import org.springframework.data.domain.PageRequest;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,8 +28,16 @@ public class EventController {
     @ResponseBody
     public ResponseEntity<?> getEventLists(
             @RequestParam(value = "_limit", required = false) Integer perPage,
-            @RequestParam(value = "_page", required = false) Integer page) {
-        Page<Event> pageOutput = eventService.getEvents(perPage, page);
+            @RequestParam(value = "_page", required = false) Integer page,
+            @RequestParam(value = "title", required = false) String title) {
+        perPage = perPage == null ? 3 : perPage;
+        page = page == null ? 1 : page;
+        Page<Event> pageOutput;
+        if (title == null) {
+            pageOutput = eventService.getEvents(perPage, page);
+        } else {
+            pageOutput = eventService.getEvents(title, PageRequest.of(page - 1, perPage));
+        }
         HttpHeaders responseHeader = new HttpHeaders();
         responseHeader.set("x-total-count", String.valueOf(pageOutput.getTotalElements()));
         responseHeader.set("X-Total-Count", String.valueOf(pageOutput.getTotalElements()));
