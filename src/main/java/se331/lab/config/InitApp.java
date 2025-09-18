@@ -5,12 +5,18 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import org.springframework.lang.NonNull;
+import se331.lab.AuctionItem;
+import se331.lab.Bid;
 import se331.lab.Event;
 import se331.lab.Organizer;
 import se331.lab.Organization;
 import se331.lab.repository.EventRepository;
 import se331.lab.repository.OrganizerRepository;
 import se331.lab.repository.OrganizationRepository;
+import se331.lab.repository.AuctionItemRepository;
+import se331.lab.repository.BidRepository;
+
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -18,6 +24,8 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
     final EventRepository eventRepository;
     final OrganizerRepository organizerRepository;
     final OrganizationRepository organizationRepository;
+    final AuctionItemRepository auctionItemRepository;
+    final BidRepository bidRepository;
 
     @Override
     public void onApplicationEvent(@NonNull ApplicationReadyEvent applicationReadyEvent) {
@@ -95,6 +103,36 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 .time("10.00am - 6.00 pm.")
                 .petAllowed(true)
                 .organizer("Chiang Mai Municipality").build());
+
+        // Seed AuctionItems and Bids
+        for (int i = 1; i <= 5; i++) {
+            AuctionItem item = AuctionItem.builder()
+                    .description("Item " + i + " description")
+                    .type(i % 2 == 0 ? "ELECTRONICS" : "COLLECTIBLE")
+                    .build();
+            // three bids+
+            Bid b1 = Bid.builder().amount(100.0 + i * 10).datetime(LocalDateTime.now().minusDays(3)).build();
+            Bid b2 = Bid.builder().amount(120.0 + i * 10).datetime(LocalDateTime.now().minusDays(2)).build();
+            Bid b3 = Bid.builder().amount(140.0 + i * 10).datetime(LocalDateTime.now().minusDays(1)).build();
+            item.addBid(b1);
+            item.addBid(b2);
+            item.addBid(b3);
+
+            // Set successful bid for first three items
+            if (i <= 3) {
+                item.setSuccessfulBid(b2);
+            }
+
+            AuctionItem saved = auctionItemRepository.save(item);
+            // persist bids (cascade also handles it, but ensure saved)
+            bidRepository.save(b1);
+            bidRepository.save(b2);
+            bidRepository.save(b3);
+            // update in case successfulBid needs managed id
+            if (saved.getSuccessfulBid() != null) {
+                auctionItemRepository.save(saved);
+            }
+        }
     }
 }
 
