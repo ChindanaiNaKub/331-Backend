@@ -33,3 +33,8 @@ build/
 
 ### VS Code ###
 .vscode/
+# Secrets
+src/main/resources/imageuploadcompo-7a4757918eb5.json
+src/main/resources/*.json
+imageuploadcompo-7a4757918eb5.json
+*.json

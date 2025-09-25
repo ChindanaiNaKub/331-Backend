@@ -6,6 +6,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,14 +27,38 @@ public class CloudStorageHelper {
     static {
         InputStream serviceAccount = null;
         try {
-            // Replace the file name below with your JSON key file placed under src/main/resources
-            serviceAccount = new ClassPathResource("imageuploadcompo-7a4757918eb5.json").getInputStream();
-            storage = StorageOptions.newBuilder()
-                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    // Replace the project id below with your own GCP project id
-                    .setProjectId("imageuploadcompo")
-                    .build()
-                    .getService();
+            StorageOptions.Builder builder = StorageOptions.newBuilder();
+
+            // Prefer Application Default Credentials (workload identity, gcloud auth, etc.)
+            String adcDisabled = System.getenv("DISABLE_ADC");
+            boolean useAdc = !StringUtils.hasText(adcDisabled) || !adcDisabled.equalsIgnoreCase("true");
+            if (useAdc) {
+                builder.setCredentials(GoogleCredentials.getApplicationDefault());
+            } else {
+                // Fallback to explicit credentials via env path
+                String credentialsPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+                if (StringUtils.hasText(credentialsPath)) {
+                    serviceAccount = new java.io.FileInputStream(credentialsPath);
+                    builder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
+                } else {
+                    // Last resort: attempt classpath resource if provided externally (not in repo)
+                    try {
+                        serviceAccount = new ClassPathResource("imageuploadcompo-7a4757918eb5.json").getInputStream();
+                        builder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
+                    } catch (Exception ignored) {
+                        // no-op; will rely on ADC if available
+                        builder.setCredentials(GoogleCredentials.getApplicationDefault());
+                    }
+                }
+            }
+
+            // Optional explicit project id via env; otherwise let SDK infer
+            String projectId = System.getenv("GCP_PROJECT_ID");
+            if (StringUtils.hasText(projectId)) {
+                builder.setProjectId(projectId);
+            }
+
+            storage = builder.build().getService();
         } catch (IOException e) {
             e.printStackTrace();
         }
