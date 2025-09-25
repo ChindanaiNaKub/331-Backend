@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import se331.lab.util.CloudStorageHelper;
+import se331.lab.util.StorageFileDto;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
@@ -23,5 +24,12 @@ public class BucketController {
     @ResponseBody
     public ResponseEntity<?> uploadFile(@RequestPart(value = "file") MultipartFile file) throws IOException, ServletException {
         return ResponseEntity.ok(this.cloudStorageHelper.getImageUrl(file, "imageuploadcompo.firebasestorage.app"));
+    }
+
+    @PostMapping("/uploadImage")
+    @ResponseBody
+    public ResponseEntity<?> uploadFileComponent(@RequestPart(value = "image") MultipartFile file) throws IOException, ServletException {
+        StorageFileDto dto = this.cloudStorageHelper.getStorageFileDto(file, "imageuploadcompo.firebasestorage.app");
+        return ResponseEntity.ok(dto);
     }
 }

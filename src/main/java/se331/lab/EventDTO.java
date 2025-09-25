@@ -1,28 +1,17 @@
 package se331.lab;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ElementCollection;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
 @Builder
-@Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class Event {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Exclude
+public class EventDTO {
     Long id;
     String title;
     String description;
@@ -32,6 +21,6 @@ public class Event {
     Boolean petAllowed;
     String organizer;
     String category;
-    @ElementCollection
+    EventOrganizerDTO organizerDTO;
     List<String> images;
 }
