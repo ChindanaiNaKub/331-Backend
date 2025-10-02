@@ -22,3 +22,11 @@ spring:
       max-request-size: 10MB
 
 
+application:
+  security:
+    jwt:
+      secret-key: 69a406f53ef3d1df91552023e7181213
+      expiration: 86400000
+      refresh-token:
+        expiration: 604800000
+
