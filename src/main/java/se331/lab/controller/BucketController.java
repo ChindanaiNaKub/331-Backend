@@ -19,17 +19,19 @@ import jakarta.servlet.ServletException;
 @CrossOrigin(origins = "*")
 public class BucketController {
     final CloudStorageHelper cloudStorageHelper;
-    
+    @org.springframework.beans.factory.annotation.Value("${application.gcs.bucket}")
+    String bucketName;
+
     @PostMapping("/uploadFile")
     @ResponseBody
     public ResponseEntity<?> uploadFile(@RequestPart(value = "file") MultipartFile file) throws IOException, ServletException {
-        return ResponseEntity.ok(this.cloudStorageHelper.getImageUrl(file, "imageuploadcompo.firebasestorage.app"));
+        return ResponseEntity.ok(this.cloudStorageHelper.getImageUrl(file, bucketName));
     }
 
     @PostMapping("/uploadImage")
     @ResponseBody
     public ResponseEntity<?> uploadFileComponent(@RequestPart(value = "image") MultipartFile file) throws IOException, ServletException {
-        StorageFileDto dto = this.cloudStorageHelper.getStorageFileDto(file, "imageuploadcompo.firebasestorage.app");
+        StorageFileDto dto = this.cloudStorageHelper.getStorageFileDto(file, bucketName);
         return ResponseEntity.ok(dto);
     }
 }

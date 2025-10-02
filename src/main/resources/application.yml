@@ -29,4 +29,6 @@ application:
       expiration: 86400000
       refresh-token:
         expiration: 604800000
+  gcs:
+    bucket: imageuploadcompo.firebasestorage.app
 

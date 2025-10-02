@@ -30,8 +30,12 @@ public class SecurityConfiguration {
     http
             .csrf((crsf) -> crsf.disable())
             .authorizeHttpRequests((authorize) -> {
-
-              authorize.anyRequest().authenticated();
+              authorize
+                  .requestMatchers(org.springframework.http.HttpMethod.GET, "/events", "/event", "/events/*", "/event/*").permitAll()
+                  .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                  .requestMatchers(org.springframework.http.HttpMethod.POST, "/uploadFile", "/uploadImage").permitAll()
+                  .requestMatchers("/api/v1/auth/**").permitAll()
+                  .anyRequest().authenticated();
             })
 
             .sessionManagement((session) ->{

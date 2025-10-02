@@ -19,4 +19,5 @@ public class EventDTO {
     String time;
     Boolean petAllowed;
     EventOrganizerDTO organizer;
+    java.util.List<String> images;
 }
