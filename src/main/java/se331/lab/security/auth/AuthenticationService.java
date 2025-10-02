@@ -17,6 +17,7 @@ import se331.lab.security.user.User;
 import se331.lab.security.user.UserRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,18 @@ public class AuthenticationService {
   private final AuthenticationManager authenticationManager;
 
   public AuthenticationResponse register(RegisterRequest request) {
+    // Check if username already exists
+    if (repository.findByUsername(request.getUsername()).isPresent()) {
+      throw new RuntimeException("Username is already taken");
+    }
+
+    // Check if email already exists
+    if (repository.findByEmail(request.getEmail()).isPresent()) {
+      throw new RuntimeException("Email is already registered");
+    }
+
     User user = User.builder()
+            .username(request.getUsername())
             .firstname(request.getFirstname())
             .lastname(request.getLastname())
             .email(request.getEmail())
@@ -40,9 +52,18 @@ public class AuthenticationService {
     var refreshToken = jwtService.generateRefreshToken(user);
     saveUserToken(savedUser, jwtToken);
     saveRefreshToken(savedUser, refreshToken);
+
+    // Build user DTO for response
+    AuthenticationResponse.SimpleUserDTO userDTO = AuthenticationResponse.SimpleUserDTO.builder()
+            .id(savedUser.getId() != null ? savedUser.getId().longValue() : null)
+            .name(savedUser.getFirstname() + " " + savedUser.getLastname())
+            .roles(savedUser.getRoles().stream().map(Role::name).collect(Collectors.toList()))
+            .build();
+
     return AuthenticationResponse.builder()
         .accessToken(jwtToken)
-            .refreshToken(refreshToken)
+        .refreshToken(refreshToken)
+        .user(userDTO)
         .build();
   }
 
@@ -64,17 +85,17 @@ public class AuthenticationService {
     saveUserToken(user, jwtToken);
     saveRefreshToken(user, refreshToken);
     
-    // Build organizer DTO manually to avoid mapper issues
-    OrganizerAuthDTO organizerDTO = OrganizerAuthDTO.builder()
-            .id(user.getOrganizer() != null ? user.getOrganizer().getId() : null)
-            .name(user.getOrganizer() != null ? user.getOrganizer().getName() : null)
-            .roles(user.getRoles())
+    // Build user DTO for response
+    AuthenticationResponse.SimpleUserDTO userDTO = AuthenticationResponse.SimpleUserDTO.builder()
+            .id(user.getId() != null ? user.getId().longValue() : null)
+            .name(user.getFirstname() + " " + user.getLastname())
+            .roles(user.getRoles().stream().map(Role::name).collect(Collectors.toList()))
             .build();
-    
+
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
             .refreshToken(refreshToken)
-            .user(organizerDTO)
+            .user(userDTO)
             .build();
   }
 
@@ -136,17 +157,17 @@ public class AuthenticationService {
         saveUserToken(user, accessToken);
         saveRefreshToken(user, newRefreshToken);
         
-        // Build organizer DTO
-        OrganizerAuthDTO organizerDTO = OrganizerAuthDTO.builder()
-                .id(user.getOrganizer() != null ? user.getOrganizer().getId() : null)
-                .name(user.getOrganizer() != null ? user.getOrganizer().getName() : null)
-                .roles(user.getRoles())
+        // Build user DTO for response
+        AuthenticationResponse.SimpleUserDTO userDTO = AuthenticationResponse.SimpleUserDTO.builder()
+                .id(user.getId() != null ? user.getId().longValue() : null)
+                .name(user.getFirstname() + " " + user.getLastname())
+                .roles(user.getRoles().stream().map(Role::name).collect(Collectors.toList()))
                 .build();
-        
+
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(newRefreshToken)
-                .user(organizerDTO)
+                .user(userDTO)
                 .build();
       }
     }

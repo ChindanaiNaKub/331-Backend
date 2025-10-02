@@ -1312,3 +1312,21 @@ java.lang.IllegalArgumentException: CharSequence cannot be null or empty.
 2025-10-03T01:00:23.850+07:00  INFO 393102 --- [331-backend] [nio-8080-exec-9] se331.lab.controller.BucketController    : File size: 40448 bytes
 2025-10-03T01:00:23.850+07:00  INFO 393102 --- [331-backend] [nio-8080-exec-9] se331.lab.controller.BucketController    : Content type: image/jpeg
 2025-10-03T01:00:26.275+07:00  INFO 393102 --- [331-backend] [nio-8080-exec-9] se331.lab.controller.BucketController    : Upload successful for image: b0eda1840659de006908235ba5a71855.jpg
+2025-10-03T01:14:19.433+07:00  INFO 393102 --- [331-backend] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-03T01:14:19.435+07:00  INFO 393102 --- [331-backend] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-10-03T01:14:19.440+07:00  INFO 393102 --- [331-backend] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-10-03T01:14:19.442+07:00  INFO 393102 --- [331-backend] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-10-03T01:14:19.448+07:00  INFO 393102 --- [331-backend] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  16:01 min
+[INFO] Finished at: 2025-10-03T01:14:19+07:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.5:run (default-cli) on project lab: Process terminated with exit code: 143 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
