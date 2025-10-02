@@ -5,14 +5,17 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import org.springframework.lang.NonNull;
+import jakarta.transaction.Transactional;
 import se331.lab.AuctionItem;
 import se331.lab.Bid;
-import se331.lab.Event;
-import se331.lab.Organizer;
-import se331.lab.Organization;
+import se331.lab.entity.Event;
+import se331.lab.entity.Organizer;
+import se331.lab.entity.Organization;
+import se331.lab.entity.Participant;
 import se331.lab.repository.EventRepository;
 import se331.lab.repository.OrganizerRepository;
 import se331.lab.repository.OrganizationRepository;
+import se331.lab.repository.ParticipantRepository;
 import se331.lab.repository.AuctionItemRepository;
 import se331.lab.repository.BidRepository;
 
@@ -26,48 +29,36 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
     final OrganizationRepository organizationRepository;
     final AuctionItemRepository auctionItemRepository;
     final BidRepository bidRepository;
+    final ParticipantRepository participantRepository;
 
     @Override
+    @Transactional
     public void onApplicationEvent(@NonNull ApplicationReadyEvent applicationReadyEvent) {
-        organizerRepository.save(Organizer.builder().organizationName("Nature Care Org").address("123 Green St, Flora City").build());
-        organizerRepository.save(Organizer.builder().organizationName("Animal Friends Association").address("55 Paw Ave, Meow Town").build());
-        organizerRepository.save(Organizer.builder().organizationName("Community Helpers").address("9 Unity Rd, Tin City").build());
+        // Save organizers first and get the saved instances
+        organizerRepository.save(Organizer.builder().name("Nature Care Org").build());
+        organizerRepository.save(Organizer.builder().name("Animal Friends Association").build());
+        organizerRepository.save(Organizer.builder().name("Community Helpers").build());
+        Organizer organizer4 = organizerRepository.save(Organizer.builder().name("CAMT").build());
+        Organizer organizer5 = organizerRepository.save(Organizer.builder().name("CMU").build());
+        Organizer organizer6 = organizerRepository.save(Organizer.builder().name("Chiang Mai").build());
+        Organizer organizer7 = organizerRepository.save(Organizer.builder().name("Chiang Mai Municipality").build());
         
         // Initialize organization data
         organizationRepository.save(Organization.builder()
                 .name("Tech Innovation Hub")
-                .description("A leading technology innovation center focused on developing cutting-edge solutions for modern challenges.")
-                .address("123 Tech Street, Innovation District, Silicon Valley, CA 94000")
-                .contactPerson("Sarah Johnson")
-                .email("contact@techinnovationhub.com")
-                .phone("+1-555-0123")
-                .website("https://www.techinnovationhub.com")
-                .establishedDate("2018-03-15")
                 .build());
         
         organizationRepository.save(Organization.builder()
                 .name("Green Earth Foundation")
-                .description("Environmental conservation organization dedicated to protecting natural ecosystems and promoting sustainable practices.")
-                .address("456 Green Avenue, Eco City, Portland, OR 97200")
-                .contactPerson("Michael Chen")
-                .email("info@greenearthfoundation.org")
-                .phone("+1-555-0456")
-                .website("https://www.greenearthfoundation.org")
-                .establishedDate("2015-07-22")
                 .build());
         
         organizationRepository.save(Organization.builder()
                 .name("Community Health Alliance")
-                .description("Non-profit organization providing healthcare services and health education to underserved communities.")
-                .address("789 Health Plaza, Medical District, Austin, TX 73300")
-                .contactPerson("Dr. Emily Rodriguez")
-                .email("admin@communityhealthalliance.org")
-                .phone("+1-555-0789")
-                .website("https://www.communityhealthalliance.org")
-                .establishedDate("2012-11-08")
                 .build());
         
-        eventRepository.save(Event.builder()
+        // Now create events using the saved organizers and properly link them
+        Event tempEvent;
+        tempEvent = eventRepository.save(Event.builder()
                 .category("Academic")
                 .title("Midterm Exam")
                 .description("A time for taking the exam")
@@ -75,8 +66,11 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 .date("3rd Sept")
                 .time("3.00-4.00 pm.")
                 .petAllowed(false)
-                .organizer("CAMT").build());
-        eventRepository.save(Event.builder()
+                .build());
+        tempEvent.setOrganizer(organizer4);
+        organizer4.getOwnEvents().add(tempEvent);
+        
+        tempEvent = eventRepository.save(Event.builder()
                 .category("Academic")
                 .title("Commencement Day")
                 .description("A time for celebration")
@@ -84,8 +78,11 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 .date("21th Jan")
                 .time("8.00am-4.00 pm.")
                 .petAllowed(false)
-                .organizer("CMU").build());
-        eventRepository.save(Event.builder()
+                .build());
+        tempEvent.setOrganizer(organizer5);
+        organizer5.getOwnEvents().add(tempEvent);
+        
+        tempEvent = eventRepository.save(Event.builder()
                 .category("Cultural")
                 .title("Loy Krathong")
                 .description("A time for Krathong")
@@ -93,8 +90,11 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 .date("21th Nov")
                 .time("8.00-10.00 pm.")
                 .petAllowed(false)
-                .organizer("Chiang Mai").build());
-        eventRepository.save(Event.builder()
+                .build());
+        tempEvent.setOrganizer(organizer6);
+        organizer6.getOwnEvents().add(tempEvent);
+        
+        tempEvent = eventRepository.save(Event.builder()
                 .category("Cultural")
                 .title("Songkran")
                 .description("Let's Play Water")
@@ -102,7 +102,57 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 .date("13th April")
                 .time("10.00am - 6.00 pm.")
                 .petAllowed(true)
-                .organizer("Chiang Mai Municipality").build());
+                .build());
+        tempEvent.setOrganizer(organizer7);
+        organizer7.getOwnEvents().add(tempEvent);
+
+        // Create 5 participants and assign them so each event has at least 3 participants
+        Participant p1 = participantRepository.save(Participant.builder().name("Alice Lee").telNo("081-111-1111").build());
+        Participant p2 = participantRepository.save(Participant.builder().name("Bob Chen").telNo("082-222-2222").build());
+        Participant p3 = participantRepository.save(Participant.builder().name("Cara Wong").telNo("083-333-3333").build());
+        Participant p4 = participantRepository.save(Participant.builder().name("David Kim").telNo("084-444-4444").build());
+        Participant p5 = participantRepository.save(Participant.builder().name("Eva Park").telNo("085-555-5555").build());
+
+        java.util.List<Event> allEvents = eventRepository.findAll();
+        if (allEvents.size() >= 4) {
+            Event e1 = allEvents.get(0);
+            Event e2 = allEvents.get(1);
+            Event e3 = allEvents.get(2);
+            Event e4 = allEvents.get(3);
+
+            // ensure lists are initialized
+            if (e1.getParticipants() == null) e1.setParticipants(new java.util.ArrayList<>());
+            if (e2.getParticipants() == null) e2.setParticipants(new java.util.ArrayList<>());
+            if (e3.getParticipants() == null) e3.setParticipants(new java.util.ArrayList<>());
+            if (e4.getParticipants() == null) e4.setParticipants(new java.util.ArrayList<>());
+
+            // Assign participants
+            e1.getParticipants().add(p1); e1.getParticipants().add(p2); e1.getParticipants().add(p3);
+            e2.getParticipants().add(p1); e2.getParticipants().add(p4); e2.getParticipants().add(p5);
+            e3.getParticipants().add(p2); e3.getParticipants().add(p3); e3.getParticipants().add(p4);
+            e4.getParticipants().add(p1); e4.getParticipants().add(p3); e4.getParticipants().add(p5);
+
+            // Mirror on participant side (owning side is Participant.eventHistory)
+            java.util.function.Consumer<Participant> ensureHistory = (pt) -> { if (pt.getEventHistory() == null) pt.setEventHistory(new java.util.ArrayList<>()); };
+            ensureHistory.accept(p1); ensureHistory.accept(p2); ensureHistory.accept(p3); ensureHistory.accept(p4); ensureHistory.accept(p5);
+
+            p1.getEventHistory().add(e1); p1.getEventHistory().add(e2); p1.getEventHistory().add(e4);
+            p2.getEventHistory().add(e1); p2.getEventHistory().add(e3);
+            p3.getEventHistory().add(e1); p3.getEventHistory().add(e3); p3.getEventHistory().add(e4);
+            p4.getEventHistory().add(e2); p4.getEventHistory().add(e3);
+            p5.getEventHistory().add(e2); p5.getEventHistory().add(e4);
+
+            // persist both sides
+            participantRepository.save(p1);
+            participantRepository.save(p2);
+            participantRepository.save(p3);
+            participantRepository.save(p4);
+            participantRepository.save(p5);
+            eventRepository.save(e1);
+            eventRepository.save(e2);
+            eventRepository.save(e3);
+            eventRepository.save(e4);
+        }
 
         // Seed AuctionItems and Bids with diverse data
         String[][] itemData = {

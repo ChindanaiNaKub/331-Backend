@@ -14,54 +14,53 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
-import se331.lab.entity.Event;
+import se331.lab.entity.Participant;
+import se331.lab.service.ParticipantService;
 import se331.lab.util.LabMapper;
-import se331.lab.service.EventService;
 import org.springframework.data.domain.PageRequest;
 
 @Controller
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-public class EventController {
-    final EventService eventService;
+public class ParticipantController {
+    final ParticipantService participantService;
 
-    @GetMapping({"event", "events"})
+    @GetMapping({"participant", "participants"})
     @ResponseBody
-    public ResponseEntity<?> getEventLists(
+    public ResponseEntity<?> getParticipantLists(
             @RequestParam(value = "_limit", required = false) Integer perPage,
             @RequestParam(value = "_page", required = false) Integer page,
-            @RequestParam(value = "title", required = false) String title) {
+            @RequestParam(value = "name", required = false) String name) {
         perPage = perPage == null ? 3 : perPage;
         page = page == null ? 1 : page;
-        Page<Event> pageOutput;
-        if (title == null) {
-            pageOutput = eventService.getEvents(perPage, page);
+        Page<Participant> pageOutput;
+        if (name == null) {
+            pageOutput = participantService.getParticipants(perPage, page);
         } else {
-            pageOutput = eventService.getEvents(title, PageRequest.of(page - 1, perPage));
+            pageOutput = participantService.getParticipants(name, PageRequest.of(page - 1, perPage));
         }
         HttpHeaders responseHeader = new HttpHeaders();
         responseHeader.set("x-total-count", String.valueOf(pageOutput.getTotalElements()));
         responseHeader.set("X-Total-Count", String.valueOf(pageOutput.getTotalElements()));
         responseHeader.setAccessControlExposeHeaders(java.util.List.of("X-Total-Count", "x-total-count"));
-        return new ResponseEntity<>(LabMapper.INSTANCE.getEventDto(pageOutput.getContent()), responseHeader, HttpStatus.OK);
+        return new ResponseEntity<>(LabMapper.INSTANCE.getParticipantDTO(pageOutput.getContent()), responseHeader, HttpStatus.OK);
     }
 
-    @GetMapping({"event/{id}", "events/{id}"})
+    @GetMapping({"participant/{id}", "participants/{id}"})
     @ResponseBody
-    public ResponseEntity<?> getEvent(@PathVariable("id") Long id) {
-        Event output = eventService.getEvent(id);
+    public ResponseEntity<?> getParticipant(@PathVariable("id") Long id) {
+        Participant output = participantService.getParticipant(id);
         if (output != null) {
-            return ResponseEntity.ok(LabMapper.INSTANCE.getEventDto(output));
+            return ResponseEntity.ok(LabMapper.INSTANCE.getParticipantDTO(output));
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The given id is not found");
         }
     }
 
-    @PostMapping("/events")
+    @PostMapping("/participants")
     @ResponseBody
-    public ResponseEntity<?> addEvent(@RequestBody Event event){
-        Event output = eventService.save(event);
-        return ResponseEntity.ok(LabMapper.INSTANCE.getEventDto(output));
+    public ResponseEntity<?> addParticipant(@RequestBody Participant participant){
+        Participant output = participantService.save(participant);
+        return ResponseEntity.ok(LabMapper.INSTANCE.getParticipantDTO(output));
     }
 }
-            

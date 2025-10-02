@@ -2,11 +2,15 @@ package se331.lab.dao;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import se331.lab.Organizer;
+import se331.lab.entity.Organizer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Profile("!db")
@@ -18,49 +22,38 @@ public class OrganizerDaoImpl implements OrganizerDao {
         organizerList = new ArrayList<>();
         organizerList.add(Organizer.builder()
                 .id(1L)
-                .organizationName("Nature Care Org")
-                .address("123 Green St, Flora City")
+                .name("Nature Care Org")
                 .build());
         organizerList.add(Organizer.builder()
                 .id(2L)
-                .organizationName("Animal Friends Association")
-                .address("55 Paw Ave, Meow Town")
+                .name("Animal Friends Association")
                 .build());
         organizerList.add(Organizer.builder()
                 .id(3L)
-                .organizationName("Community Helpers")
-                .address("9 Unity Rd, Tin City")
+                .name("Community Helpers")
                 .build());
     }
 
     @Override
-    public Integer getOrganizerSize() {
-        return organizerList.size();
-    }
-
-    @Override
-    public List<Organizer> getOrganizers(Integer pageSize, Integer page) {
-        pageSize = pageSize == null ? organizerList.size() : pageSize;
-        page = page == null ? 1 : page;
-        int firstIndex = (page - 1) * pageSize;
-        int toIndex = Math.min(firstIndex + pageSize, organizerList.size());
-        if (firstIndex >= organizerList.size()) {
-            return List.of();
+    public Page<Organizer> getOrganizer(Pageable pageRequest) {
+        int pageSize = pageRequest.getPageSize();
+        int pageNumber = pageRequest.getPageNumber();
+        int startIndex = pageNumber * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, organizerList.size());
+        
+        if (startIndex >= organizerList.size()) {
+            return new PageImpl<>(new ArrayList<>(), pageRequest, organizerList.size());
         }
-        return organizerList.subList(firstIndex, toIndex);
+        
+        List<Organizer> pageContent = organizerList.subList(startIndex, endIndex);
+        return new PageImpl<>(pageContent, pageRequest, organizerList.size());
     }
-
+    
     @Override
-    public Organizer getOrganizer(Long id) {
-        return organizerList.stream().filter(o -> o.getId().equals(id)).findFirst().orElse(null);
-    }
-
-    @Override
-    public Organizer save(Organizer organizer) {
-        Long nextId = organizerList.stream().map(Organizer::getId).max(Long::compareTo).orElse(0L) + 1;
-        organizer.setId(nextId);
-        organizerList.add(organizer);
-        return organizer;
+    public Optional<Organizer> findById(Long id) {
+        return organizerList.stream()
+                .filter(organizer -> organizer.getId().equals(id))
+                .findFirst();
     }
 }
 

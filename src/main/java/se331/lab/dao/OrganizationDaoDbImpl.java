@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
-import se331.lab.Organization;
+import se331.lab.entity.Organization;
 import se331.lab.repository.OrganizationRepository;
 
 @Repository

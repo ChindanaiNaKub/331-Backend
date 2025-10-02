@@ -7,7 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
-import se331.lab.Event;
+import se331.lab.entity.Event;
+import se331.lab.entity.Organizer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ public class EventDaoImpl implements EventDao {
                 .date("January 28, 2022")
                 .time("12:00")
                 .petAllowed(true)
-                .organizer("Kat Laydee")
+                .organizer(Organizer.builder().id(1L).name("Kat Laydee").build())
                 .build());
         eventList.add(Event.builder()
                 .id(456L)
@@ -40,7 +41,7 @@ public class EventDaoImpl implements EventDao {
                 .date("March 14, 2022")
                 .time("10:00")
                 .petAllowed(true)
-                .organizer("Fern Pollin")
+                .organizer(Organizer.builder().id(2L).name("Fern Pollin").build())
                 .build());
         // Add the rest of the events similar to your db.json as needed
         eventList.add(Event.builder()
@@ -52,7 +53,7 @@ public class EventDaoImpl implements EventDao {
                 .date("July 22, 2022")
                 .time("11:00")
                 .petAllowed(false)
-                .organizer("Carey Wales")
+                .organizer(Organizer.builder().id(3L).name("Carey Wales").build())
                 .build());
         eventList.add(Event.builder()
                 .id(1001L)
@@ -63,7 +64,7 @@ public class EventDaoImpl implements EventDao {
                 .date("August 28, 2022")
                 .time("12:00")
                 .petAllowed(true)
-                .organizer("Dawg Dahd")
+                .organizer(Organizer.builder().id(4L).name("Dawg Dahd").build())
                 .build());
         eventList.add(Event.builder()
                 .id(1002L)
@@ -74,7 +75,7 @@ public class EventDaoImpl implements EventDao {
                 .date("September 14, 2022")
                 .time("3:00")
                 .petAllowed(true)
-                .organizer("Kahn Opiner")
+                .organizer(Organizer.builder().id(5L).name("Kahn Opiner").build())
                 .build());
         eventList.add(Event.builder()
                 .id(1003L)
@@ -85,7 +86,7 @@ public class EventDaoImpl implements EventDao {
                 .date("July 22, 2022")
                 .time("11:00")
                 .petAllowed(false)
-                .organizer("Brody Kill")
+                .organizer(Organizer.builder().id(6L).name("Brody Kill").build())
                 .build());
     }
 
@@ -111,7 +112,7 @@ public class EventDaoImpl implements EventDao {
                 .filter(e ->
                         (e.getTitle() != null && e.getTitle().toLowerCase().contains(keyword)) ||
                         (e.getDescription() != null && e.getDescription().toLowerCase().contains(keyword)) ||
-                        (e.getOrganizer() != null && e.getOrganizer().toLowerCase().contains(keyword))
+                        (e.getOrganizer() != null && e.getOrganizer().getName() != null && e.getOrganizer().getName().toLowerCase().contains(keyword))
                 )
                 .toList();
 
