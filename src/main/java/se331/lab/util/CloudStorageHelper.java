@@ -32,22 +32,38 @@ public class CloudStorageHelper {
             // Prefer Application Default Credentials (workload identity, gcloud auth, etc.)
             String adcDisabled = System.getenv("DISABLE_ADC");
             boolean useAdc = !StringUtils.hasText(adcDisabled) || !adcDisabled.equalsIgnoreCase("true");
+
             if (useAdc) {
-                builder.setCredentials(GoogleCredentials.getApplicationDefault());
-            } else {
-                // Fallback to explicit credentials via env path
+                try {
+                    builder.setCredentials(GoogleCredentials.getApplicationDefault());
+                    System.out.println("Using Application Default Credentials");
+                } catch (IOException adcException) {
+                    System.err.println("ADC not available: " + adcException.getMessage());
+                    useAdc = false; // Fall back to explicit credentials
+                }
+            }
+
+            // If ADC failed or is disabled, use explicit credentials
+            if (!useAdc) {
                 String credentialsPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
                 if (StringUtils.hasText(credentialsPath)) {
-                    serviceAccount = new java.io.FileInputStream(credentialsPath);
-                    builder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
+                    try {
+                        serviceAccount = new java.io.FileInputStream(credentialsPath);
+                        builder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
+                        System.out.println("Using credentials from GOOGLE_APPLICATION_CREDENTIALS: " + credentialsPath);
+                    } catch (IOException e) {
+                        System.err.println("Failed to load credentials from GOOGLE_APPLICATION_CREDENTIALS: " + e.getMessage());
+                        throw new RuntimeException("Failed to load credentials from GOOGLE_APPLICATION_CREDENTIALS: " + credentialsPath, e);
+                    }
                 } else {
-                    // Last resort: attempt classpath resource if provided externally (not in repo)
+                    // Last resort: attempt classpath resource
                     try {
                         serviceAccount = new ClassPathResource("imageuploadcompo-7a4757918eb5.json").getInputStream();
                         builder.setCredentials(GoogleCredentials.fromStream(serviceAccount));
-                    } catch (Exception ignored) {
-                        // no-op; will rely on ADC if available
-                        builder.setCredentials(GoogleCredentials.getApplicationDefault());
+                        System.out.println("Using classpath credentials: imageuploadcompo-7a4757918eb5.json");
+                    } catch (Exception e) {
+                        System.err.println("Failed to load classpath credentials: " + e.getMessage());
+                        throw new RuntimeException("No valid credentials found. Please set GOOGLE_APPLICATION_CREDENTIALS environment variable or ensure credentials file is in classpath.", e);
                     }
                 }
             }
@@ -56,11 +72,23 @@ public class CloudStorageHelper {
             String projectId = System.getenv("GCP_PROJECT_ID");
             if (StringUtils.hasText(projectId)) {
                 builder.setProjectId(projectId);
+                System.out.println("Using project ID from GCP_PROJECT_ID: " + projectId);
             }
 
             storage = builder.build().getService();
-        } catch (IOException e) {
+            System.out.println("CloudStorageHelper initialized successfully");
+        } catch (Exception e) {
+            System.err.println("Failed to initialize CloudStorageHelper: " + e.getMessage());
             e.printStackTrace();
+            throw new RuntimeException("CloudStorageHelper initialization failed", e);
+        } finally {
+            if (serviceAccount != null) {
+                try {
+                    serviceAccount.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
     }
 

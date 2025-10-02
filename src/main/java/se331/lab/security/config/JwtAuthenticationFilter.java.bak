@@ -6,10 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -31,19 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   @Override
   protected boolean shouldNotFilter(@NonNull HttpServletRequest request) throws ServletException {
     String path = request.getRequestURI();
-    String method = request.getMethod();
-
     // Skip auth endpoints and public upload endpoints entirely
     if (path.startsWith("/api/v1/auth/")) {
       return true;
     }
-    // Skip upload endpoints entirely - they should be public
-    if ((path.equals("/uploadImage") || path.equals("/uploadFile")) &&
-        ("POST".equalsIgnoreCase(method) || "GET".equalsIgnoreCase(method))) {
+    if ("/uploadImage".equals(path) || "/uploadFile".equals(path)) {
       return true;
     }
     // Always let CORS preflight through
-    if ("OPTIONS".equalsIgnoreCase(method)) {
+    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
       return true;
     }
     return false;
@@ -89,14 +83,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
     
-    // Allow upload endpoints without requiring JWT auth, but set anonymous authentication
+    // Allow upload endpoints without requiring JWT auth
     if (path.equals("/uploadImage") || path.equals("/uploadFile")) {
-      AnonymousAuthenticationToken anonymousAuth = new AnonymousAuthenticationToken(
-          "anonymous",
-          "anonymous",
-          java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
-      );
-      SecurityContextHolder.getContext().setAuthentication(anonymousAuth);
       filterChain.doFilter(request, response);
       return;
     }

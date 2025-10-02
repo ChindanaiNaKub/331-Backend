@@ -18,6 +18,11 @@ import se331.lab.repository.OrganizationRepository;
 import se331.lab.repository.ParticipantRepository;
 import se331.lab.repository.AuctionItemRepository;
 import se331.lab.repository.BidRepository;
+import se331.lab.security.user.User;
+import se331.lab.security.user.Role;
+import se331.lab.security.user.UserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +35,7 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
     final AuctionItemRepository auctionItemRepository;
     final BidRepository bidRepository;
     final ParticipantRepository participantRepository;
+    final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -154,6 +160,9 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
             eventRepository.save(e4);
         }
 
+        // Add users and link with organizers
+        addUserAndLink(organizer4, organizer5, organizer6);
+
         // Seed AuctionItems and Bids with diverse data
         String[][] itemData = {
             {"Vintage Rolex Submariner Watch", "JEWELRY", "1500.0", "1600.0", "1700.0"},
@@ -199,6 +208,47 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
                 auctionItemRepository.save(saved);
             }
         }
+    }
+
+    User user1, user2, user3;
+    private void addUserAndLink(Organizer org1, Organizer org2, Organizer org3) {
+        PasswordEncoder encoder = new BCryptPasswordEncoder();
+        user1 = User.builder()
+                .username("admin")
+                .password(encoder.encode("admin"))
+                .firstname("admin")
+                .lastname("admin")
+                .email("admin@admin.com")
+                .enabled(true)
+                .roles(java.util.List.of(Role.ROLE_USER, Role.ROLE_ADMIN))
+                .build();
+        user2 = User.builder()
+                .username("user")
+                .password(encoder.encode("user"))
+                .firstname("user")
+                .lastname("user")
+                .email("enabled@user.com")
+                .enabled(true)
+                .roles(java.util.List.of(Role.ROLE_USER))
+                .build();
+        user3 = User.builder()
+                .username("disableUser")
+                .password(encoder.encode("disableUser"))
+                .firstname("disableUser")
+                .lastname("disableUser")
+                .email("disableUser@user.com")
+                .enabled(false)
+                .roles(java.util.List.of(Role.ROLE_USER))
+                .build();
+        user1.setOrganizer(org1);
+        user2.setOrganizer(org2);
+        user3.setOrganizer(org3);
+        org1.setUser(user1);
+        org2.setUser(user2);
+        org3.setUser(user3);
+        userRepository.save(user1);
+        userRepository.save(user2);
+        userRepository.save(user3);
     }
 }
 

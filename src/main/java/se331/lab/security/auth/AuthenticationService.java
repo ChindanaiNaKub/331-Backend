@@ -2,11 +2,7 @@ package se331.lab.security.auth;
 
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,11 +11,11 @@ import se331.lab.security.config.JwtService;
 import se331.lab.security.token.Token;
 import se331.lab.security.token.TokenRepository;
 import se331.lab.security.token.TokenType;
+import se331.lab.OrganizerAuthDTO;
 import se331.lab.security.user.Role;
 import se331.lab.security.user.User;
 import se331.lab.security.user.UserRepository;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -43,6 +39,7 @@ public class AuthenticationService {
     var jwtToken = jwtService.generateToken(user);
     var refreshToken = jwtService.generateRefreshToken(user);
     saveUserToken(savedUser, jwtToken);
+    saveRefreshToken(savedUser, refreshToken);
     return AuthenticationResponse.builder()
         .accessToken(jwtToken)
             .refreshToken(refreshToken)
@@ -56,16 +53,28 @@ public class AuthenticationService {
                     request.getPassword()
             )
     );
+    // Try username first; if not found, try email
     User user = repository.findByUsername(request.getUsername())
+            .or(() -> repository.findByEmail(request.getUsername()))
             .orElseThrow();
 
     String jwtToken = jwtService.generateToken(user);
     String refreshToken = jwtService.generateRefreshToken(user);
-//    revokeAllUserTokens(user);
+    revokeAllUserTokens(user);
     saveUserToken(user, jwtToken);
+    saveRefreshToken(user, refreshToken);
+    
+    // Build organizer DTO manually to avoid mapper issues
+    OrganizerAuthDTO organizerDTO = OrganizerAuthDTO.builder()
+            .id(user.getOrganizer() != null ? user.getOrganizer().getId() : null)
+            .name(user.getOrganizer() != null ? user.getOrganizer().getName() : null)
+            .roles(user.getRoles())
+            .build();
+    
     return AuthenticationResponse.builder()
             .accessToken(jwtToken)
             .refreshToken(refreshToken)
+            .user(organizerDTO)
             .build();
   }
 
@@ -73,7 +82,18 @@ public class AuthenticationService {
     Token token = Token.builder()
             .user(user)
             .token(jwtToken)
-            .tokenType(TokenType.BEARER)
+            .tokenType(TokenType.ACCESS)
+            .expired(false)
+            .revoked(false)
+            .build();
+    tokenRepository.save(token);
+  }
+
+  private void saveRefreshToken(User user, String refreshToken) {
+    Token token = Token.builder()
+            .user(user)
+            .token(refreshToken)
+            .tokenType(TokenType.REFRESH)
             .expired(false)
             .revoked(false)
             .build();
@@ -91,31 +111,45 @@ public class AuthenticationService {
     tokenRepository.saveAll(validUserTokens);
   }
 
-  public void refreshToken(
-          HttpServletRequest request,
-          HttpServletResponse response
-  ) throws IOException {
-    final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-    final String refreshToken;
-    final String userEmail;
-    if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-      return;
-    }
-    refreshToken = authHeader.substring(7);
-    userEmail = jwtService.extractUsername(refreshToken);
+  public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
+    final String refreshToken = request.getRefreshToken();
+    final String userEmail = jwtService.extractUsername(refreshToken);
+    
     if (userEmail != null) {
       User user = this.repository.findByUsername(userEmail)
+              .or(() -> repository.findByEmail(userEmail))
               .orElseThrow();
-      if (jwtService.isTokenValid(refreshToken, user)) {
+      
+      // Check if refresh token is valid and not revoked/expired
+      boolean isRefreshTokenValid = tokenRepository.findByToken(refreshToken)
+              .map(token -> !token.isExpired() && !token.isRevoked() && token.getTokenType() == TokenType.REFRESH)
+              .orElse(false);
+      
+      if (jwtService.isTokenValid(refreshToken, user) && isRefreshTokenValid) {
         String accessToken = jwtService.generateToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+        
+        // Revoke old tokens
         revokeAllUserTokens(user);
+        
+        // Save new tokens
         saveUserToken(user, accessToken);
-        AuthenticationResponse authResponse = AuthenticationResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
+        saveRefreshToken(user, newRefreshToken);
+        
+        // Build organizer DTO
+        OrganizerAuthDTO organizerDTO = OrganizerAuthDTO.builder()
+                .id(user.getOrganizer() != null ? user.getOrganizer().getId() : null)
+                .name(user.getOrganizer() != null ? user.getOrganizer().getName() : null)
+                .roles(user.getRoles())
                 .build();
-        new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+        
+        return AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(newRefreshToken)
+                .user(organizerDTO)
+                .build();
       }
     }
+    throw new RuntimeException("Invalid refresh token");
   }
 }
