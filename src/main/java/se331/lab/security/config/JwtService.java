@@ -10,10 +10,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -34,8 +37,23 @@ public class JwtService {
     return claimsResolver.apply(claims);
   }
 
+  public List<String> extractRoles(String token) {
+    Claims claims = extractAllClaims(token);
+    @SuppressWarnings("unchecked")
+    List<String> roles = claims.get("roles", List.class);
+    return roles != null ? roles : new ArrayList<>();
+  }
+
   public String generateToken(UserDetails userDetails) {
-    return generateToken(new HashMap<>(), userDetails);
+    Map<String, Object> claims = new HashMap<>();
+    
+    // Include roles in JWT claims
+    List<String> roles = userDetails.getAuthorities().stream()
+        .map(authority -> authority.getAuthority())
+        .collect(Collectors.toList());
+    claims.put("roles", roles);
+    
+    return generateToken(claims, userDetails);
   }
 
   public String generateToken(

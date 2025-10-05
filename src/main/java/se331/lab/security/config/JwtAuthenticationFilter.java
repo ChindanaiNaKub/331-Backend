@@ -19,6 +19,7 @@ import se331.lab.security.token.TokenRepository;
 import se331.lab.security.token.TokenType;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -104,27 +105,69 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     final String jwt;
     final String userEmail;
     if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+      org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+          .warn("No Authorization header or doesn't start with Bearer for path: {}", path);
       filterChain.doFilter(request, response);
       return;
     }
     jwt = authHeader.substring(7);
-    userEmail = jwtService.extractUsername(jwt);
-    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-      boolean isTokenValid = tokenRepository.findByToken(jwt)
-              .map(t -> !t.isExpired() && !t.isRevoked() && t.getTokenType() == TokenType.ACCESS)
-              .orElse(false);
-      if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
-            userDetails.getAuthorities()
-        );
-        authToken.setDetails(
-            new WebAuthenticationDetailsSource().buildDetails(request)
-        );
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+    org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+        .info("Processing JWT for path: {}, token: {}...", path, jwt.substring(0, Math.min(20, jwt.length())));
+    
+    try {
+      userEmail = jwtService.extractUsername(jwt);
+      org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+          .info("Extracted username: {}", userEmail);
+      
+      if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+            .info("User details loaded: {}, authorities: {}", userDetails.getUsername(), userDetails.getAuthorities());
+        
+        boolean isTokenValid = tokenRepository.findByToken(jwt)
+                .map(t -> {
+                  boolean valid = !t.isExpired() && !t.isRevoked() && t.getTokenType() == TokenType.ACCESS;
+                  org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+                      .info("Token validation - expired: {}, revoked: {}, type: {}, valid: {}", 
+                          t.isExpired(), t.isRevoked(), t.getTokenType(), valid);
+                  return valid;
+                })
+                .orElse(false);
+        
+        org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+            .info("Token found in repository: {}, JWT service validation: {}", 
+                isTokenValid, jwtService.isTokenValid(jwt, userDetails));
+        
+        if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
+          // Extract roles from JWT token and convert to authorities
+          List<String> rolesFromToken = jwtService.extractRoles(jwt);
+          List<SimpleGrantedAuthority> authorities = rolesFromToken.stream()
+              .map(SimpleGrantedAuthority::new)
+              .collect(java.util.stream.Collectors.toList());
+          
+          org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+              .info("Roles extracted from JWT: {}, converted to authorities: {}", rolesFromToken, authorities);
+          
+          UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+              userDetails,
+              null,
+              authorities  // Use authorities extracted from JWT token instead of database
+          );
+          authToken.setDetails(
+              new WebAuthenticationDetailsSource().buildDetails(request)
+          );
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+          org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+              .info("Authentication set successfully with JWT authorities: {}", authorities);
+        } else {
+          org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+              .warn("Token validation failed - isTokenValid: {}, jwtService.isTokenValid: {}", 
+                  isTokenValid, jwtService.isTokenValid(jwt, userDetails));
+        }
       }
+    } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(JwtAuthenticationFilter.class)
+          .error("Error processing JWT: {}", e.getMessage(), e);
     }
     filterChain.doFilter(request, response);
   }

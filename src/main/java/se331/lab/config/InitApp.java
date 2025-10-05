@@ -40,6 +40,11 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
     @Override
     @Transactional
     public void onApplicationEvent(@NonNull ApplicationReadyEvent applicationReadyEvent) {
+        // Check if data already exists to avoid duplicates
+        if (userRepository.count() > 0) {
+            return; // Data already initialized, skip
+        }
+        
         // Save organizers first and get the saved instances
         organizerRepository.save(Organizer.builder().name("Nature Care Org").build());
         organizerRepository.save(Organizer.builder().name("Animal Friends Association").build());

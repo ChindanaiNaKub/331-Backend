@@ -54,6 +54,13 @@ public class AuctionItemController {
         if (item != null) return ResponseEntity.ok(item);
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The given id is not found");
     }
+
+    @org.springframework.web.bind.annotation.PostMapping("/auction-items")
+    @ResponseBody
+    public ResponseEntity<?> addItem(@org.springframework.web.bind.annotation.RequestBody AuctionItem item) {
+        AuctionItem savedItem = auctionItemService.save(item);
+        return ResponseEntity.ok(savedItem);
+    }
 }
 
 

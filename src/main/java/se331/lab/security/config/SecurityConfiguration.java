@@ -84,6 +84,7 @@ public class SecurityConfiguration {
                   .requestMatchers("/actuator/**").permitAll()
                   .requestMatchers(org.springframework.http.HttpMethod.POST, "/uploadFile", "/uploadImage").permitAll()
                   .requestMatchers(org.springframework.http.HttpMethod.POST, "/events").hasRole("ADMIN")
+                  .requestMatchers(org.springframework.http.HttpMethod.POST, "/auction-items").hasRole("ADMIN")
                   .anyRequest().authenticated();
             })
 
