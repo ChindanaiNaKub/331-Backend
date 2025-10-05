@@ -28,13 +28,21 @@ public class AuctionItemController {
             @RequestParam(value = "_limit", required = false) Integer perPage,
             @RequestParam(value = "_page", required = false) Integer page,
             @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "type", required = false) String type,
             @RequestParam(value = "maxSuccessful", required = false) Double maxSuccessful
     ) {
         perPage = perPage == null ? 5 : perPage;
         page = page == null ? 1 : page;
         Page<AuctionItem> output;
-        if (description != null) {
+        if (description != null && type != null) {
+            // Search by both description and type (OR condition)
+            output = auctionItemService.getItemsByDescriptionOrType(description, type, PageRequest.of(page - 1, perPage));
+        } else if (description != null) {
+            // Search by description only
             output = auctionItemService.getItemsByDescription(description, PageRequest.of(page - 1, perPage));
+        } else if (type != null) {
+            // Search by type only (reuse the OR method with same value)
+            output = auctionItemService.getItemsByDescriptionOrType(type, type, PageRequest.of(page - 1, perPage));
         } else if (maxSuccessful != null) {
             output = auctionItemService.getItemsBySuccessfulBidLessThan(maxSuccessful, PageRequest.of(page - 1, perPage));
         } else {

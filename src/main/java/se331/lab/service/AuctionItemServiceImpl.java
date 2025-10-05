@@ -34,6 +34,11 @@ public class AuctionItemServiceImpl implements AuctionItemService {
     }
 
     @Override
+    public Page<AuctionItem> getItemsByDescriptionOrType(String description, String type, Pageable pageable) {
+        return auctionItemRepository.findByDescriptionIgnoreCaseContainingOrTypeIgnoreCaseContaining(description, type, pageable);
+    }
+
+    @Override
     public AuctionItem save(AuctionItem item) {
         return auctionItemRepository.save(item);
     }

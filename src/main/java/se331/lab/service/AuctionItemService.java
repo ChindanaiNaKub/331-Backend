@@ -8,6 +8,7 @@ public interface AuctionItemService {
     Page<AuctionItem> getItems(Integer pageSize, Integer page);
     Page<AuctionItem> getItemsByDescription(String description, Pageable pageable);
     Page<AuctionItem> getItemsBySuccessfulBidLessThan(Double amount, Pageable pageable);
+    Page<AuctionItem> getItemsByDescriptionOrType(String description, String type, Pageable pageable);
     AuctionItem getItem(Long id);
     AuctionItem save(AuctionItem item);
 }

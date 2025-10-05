@@ -33,6 +33,7 @@ public class AuctionItem {
 
     String description;
     String type;
+    Double startingPrice;
 
     @Builder.Default
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

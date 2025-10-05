@@ -8,6 +8,7 @@ import se331.lab.AuctionItem;
 public interface AuctionItemRepository extends JpaRepository<AuctionItem, Long> {
     Page<AuctionItem> findByDescriptionIgnoreCaseContaining(String description, Pageable pageable);
     Page<AuctionItem> findBySuccessfulBid_AmountLessThan(Double amount, Pageable pageable);
+    Page<AuctionItem> findByDescriptionIgnoreCaseContainingOrTypeIgnoreCaseContaining(String description, String type, Pageable pageable);
 }
 
 

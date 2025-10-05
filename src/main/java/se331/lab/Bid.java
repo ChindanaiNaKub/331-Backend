@@ -27,6 +27,7 @@ public class Bid {
     Long id;
 
     Double amount;
+    String bidder;
     LocalDateTime datetime;
 
     @ManyToOne(fetch = FetchType.LAZY)

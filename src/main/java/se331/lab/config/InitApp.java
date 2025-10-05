@@ -169,38 +169,52 @@ public class InitApp implements ApplicationListener<ApplicationReadyEvent> {
         addUserAndLink(organizer4, organizer5, organizer6);
 
         // Seed AuctionItems and Bids with diverse data
+        // Format: {description, type, startingPrice, bid1, bid2, bid3}
         String[][] itemData = {
-            {"Vintage Rolex Submariner Watch", "JEWELRY", "1500.0", "1600.0", "1700.0"},
-            {"MacBook Pro M3 16-inch", "ELECTRONICS", "2000.0", "2200.0", "2400.0"},
-            {"Rare Pokemon Charizard Card", "COLLECTIBLE", "500.0", "600.0", "700.0"},
-            {"Antique Persian Rug", "FURNITURE", "800.0", "900.0", "1000.0"},
-            {"Nike Air Jordan 1 Retro", "FASHION", "200.0", "250.0", "300.0"},
-            {"Vinyl Record Collection - Beatles", "MUSIC", "300.0", "350.0", "400.0"},
-            {"Gaming PC RTX 4090", "ELECTRONICS", "2500.0", "2700.0", "2900.0"},
-            {"Diamond Engagement Ring", "JEWELRY", "3000.0", "3200.0", "3400.0"},
-            {"Vintage Wine Collection", "FOOD", "1200.0", "1300.0", "1400.0"},
-            {"Art Painting - Abstract", "ART", "800.0", "900.0", "1000.0"}
+            {"Vintage Rolex Submariner Watch", "JEWELRY", "1000.0", "1500.0", "1600.0", "1700.0"},
+            {"MacBook Pro M3 16-inch", "ELECTRONICS", "1800.0", "2000.0", "2200.0", "2400.0"},
+            {"Rare Pokemon Charizard Card", "COLLECTIBLE", "400.0", "500.0", "600.0", "700.0"},
+            {"Antique Persian Rug", "FURNITURE", "700.0", "800.0", "900.0", "1000.0"},
+            {"Nike Air Jordan 1 Retro", "FASHION", "150.0", "200.0", "250.0", "300.0"},
+            {"Vintage Basketball", "SPORTS", "50.0", "100.0", "150.0", "200.0"},
+            {"Gaming PC RTX 4090", "ELECTRONICS", "2300.0", "2500.0", "2700.0", "2900.0"},
+            {"Diamond Engagement Ring", "JEWELRY", "2800.0", "3000.0", "3200.0", "3400.0"}
         };
+
+        String[] bidders = {"Alice Johnson", "Bob Smith", "Charlie Davis", "Diana Prince", "Eve Williams"};
 
         for (int i = 0; i < itemData.length; i++) {
             String[] data = itemData[i];
             AuctionItem item = AuctionItem.builder()
                     .description(data[0])
                     .type(data[1])
+                    .startingPrice(Double.parseDouble(data[2]))
                     .build();
             
-            // Create three bids with different amounts
-            Bid b1 = Bid.builder().amount(Double.parseDouble(data[2])).datetime(LocalDateTime.now().minusDays(3)).build();
-            Bid b2 = Bid.builder().amount(Double.parseDouble(data[3])).datetime(LocalDateTime.now().minusDays(2)).build();
-            Bid b3 = Bid.builder().amount(Double.parseDouble(data[4])).datetime(LocalDateTime.now().minusDays(1)).build();
+            // Create three bids with different amounts and bidders
+            Bid b1 = Bid.builder()
+                    .amount(Double.parseDouble(data[3]))
+                    .bidder(bidders[i % bidders.length])
+                    .datetime(LocalDateTime.now().minusDays(3))
+                    .build();
+            Bid b2 = Bid.builder()
+                    .amount(Double.parseDouble(data[4]))
+                    .bidder(bidders[(i + 1) % bidders.length])
+                    .datetime(LocalDateTime.now().minusDays(2))
+                    .build();
+            Bid b3 = Bid.builder()
+                    .amount(Double.parseDouble(data[5]))
+                    .bidder(bidders[(i + 2) % bidders.length])
+                    .datetime(LocalDateTime.now().minusDays(1))
+                    .build();
             
             item.addBid(b1);
             item.addBid(b2);
             item.addBid(b3);
 
-            // Set successful bid for first 6 items (different types)
-            if (i < 6) {
-                item.setSuccessfulBid(b2);
+            // Set successful bid for first 5 items (meets Lab 9 requirement: at least 3 items with successful bids)
+            if (i < 5) {
+                item.setSuccessfulBid(b3); // Highest bid wins
             }
 
             AuctionItem saved = auctionItemRepository.save(item);
