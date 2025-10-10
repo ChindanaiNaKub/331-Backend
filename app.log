@@ -57,3 +57,8 @@ CloudStorageHelper initialized successfully
 2025-10-05T15:40:53.266+07:00  INFO 201823 --- [331-backend] [io-8080-exec-10] s.l.s.config.JwtAuthenticationFilter     : Token found in repository: true, JWT service validation: true
 2025-10-05T15:40:53.267+07:00  INFO 201823 --- [331-backend] [io-8080-exec-10] s.l.s.config.JwtAuthenticationFilter     : Roles extracted from JWT: [ROLE_USER, ROLE_ADMIN], converted to authorities: [ROLE_USER, ROLE_ADMIN]
 2025-10-05T15:40:53.267+07:00  INFO 201823 --- [331-backend] [io-8080-exec-10] s.l.s.config.JwtAuthenticationFilter     : Authentication set successfully with JWT authorities: [ROLE_USER, ROLE_ADMIN]
+2025-10-05T15:46:00.123+07:00  INFO 201823 --- [331-backend] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-05T15:46:00.128+07:00  INFO 201823 --- [331-backend] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-10-05T15:46:00.134+07:00  INFO 201823 --- [331-backend] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-10-05T15:46:00.137+07:00  INFO 201823 --- [331-backend] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-10-05T15:46:00.144+07:00  INFO 201823 --- [331-backend] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
